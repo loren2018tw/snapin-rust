@@ -1,0 +1,55 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "snapin-rust",
+  "version": "0.1.0",
+  "identifier": "boats.loren.snapin-rust",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "snapin-rust",
+        "width": 800,
+        "height": 600,
+        "maximized": true,
+        "decorations": false,
+        "transparent": true,
+        "resizable": true,
+        "visible": false,
+        "skipTaskbar": true
+      },
+      {
+        "label": "toolbar",
+        "title": "Toolbar",
+        "width": 55,
+        "height": 550,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "visible": false,
+        "url": "/#toolbar",
+        "skipTaskbar": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["appimage", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}
