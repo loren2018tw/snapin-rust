@@ -33,37 +33,43 @@
         title="軌跡筆"
       />
 
-      <!-- 形狀工具選單 -->
-      <v-menu location="left center" offset="10">
-        <template v-slot:activator="{ props: menuProps }">
-          <v-btn
-            v-bind="menuProps"
+      <!-- 形狀工具選單 (Speed Dial) -->
+      <v-speed-dial location="left center" transition="scale-transition">
+        <template v-slot:activator="{ props: activatorProps }">
+          <v-fab
+            v-bind="activatorProps"
             :icon="shapeToolIcon"
             variant="text"
             density="comfortable"
-            :color="isShapeToolActive ? 'primary' : 'grey'"
+            :color="isShapeToolActive ? 'primary' : 'grey-darken-1'"
             class="tool-btn"
+            title="形狀工具"
           />
         </template>
-        <v-list density="compact" bg-color="white" elevation="4">
-          <v-list-item
-            @click="updateTool('Rectangle')"
-            title="長方形"
-          >
-            <template v-slot:prepend>
-              <v-icon icon="mdi-rectangle-outline" color="primary"></v-icon>
-            </template>
-          </v-list-item>
-          <v-list-item
-            @click="updateTool('Ellipse')"
-            title="橢圓形"
-          >
-            <template v-slot:prepend>
-              <v-icon icon="mdi-circle-outline" color="primary"></v-icon>
-            </template>
-          </v-list-item>
-        </v-list>
-      </v-menu>
+
+        <v-btn
+          key="Rectangle"
+          variant="flat"
+          density="comfortable"
+          elevation="1"
+          @click="updateTool('Rectangle')"
+          class="tool-btn"
+          title="長方形"
+        >
+          <v-icon icon="mdi-rectangle-outline" color="primary" />
+        </v-btn>
+        <v-btn
+          key="Ellipse"
+          variant="flat"
+          density="comfortable"
+          elevation="1"
+          @click="updateTool('Ellipse')"
+          class="tool-btn"
+          title="橢圓形"
+        >
+          <v-icon icon="mdi-circle-outline" color="primary" />
+        </v-btn>
+      </v-speed-dial>
 
       <!-- 滑鼠指標工具 -->
       <v-btn
@@ -249,16 +255,41 @@ async function toggleWhiteboard() {
 }
 
 .tool-btn {
-  width: 32px;
-  height: 32px;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important; /* 防止被擠壓成橢圓 */
+  padding: 0 !important;
+  background-color: #ffffff !important; 
+  border-radius: 50% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* 防止在 flex 佈局中縮小 */
   -webkit-app-region: no-drag;
+}
+
+/* Speed Dial 彈出內容的樣式 */
+:deep(.v-speed-dial__content) {
+  background-color: rgba(255, 255, 255, 0.9); 
+  padding: 8px 12px;
+  border-radius: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: row; 
+  gap: 10px;
+  margin-right: 10px; 
 }
 
 .close-btn {
   margin-top: auto;
   margin-bottom: 20px;
-  width: 32px;
-  height: 32px;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  padding: 0 !important;
+  background-color: #f0efe3 !important; 
+  border-radius: 50% !important;
+  flex-shrink: 0;
   -webkit-app-region: no-drag;
 }
 </style>
