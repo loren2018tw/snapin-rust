@@ -26,7 +26,7 @@ let unlistenWhiteboard: (() => void) | null = null;
 /**
  * 監聽並強制同步視窗背景
  */
-watch(isWhiteboardMode, (val) => {
+watch(isWhiteboardMode, async (val) => {
   if (isToolbarWindow.value) return;
   
   const color = val ? '#ffffff' : 'transparent';
@@ -35,6 +35,12 @@ watch(isWhiteboardMode, (val) => {
   // 使用 setProperty 強制注入樣式，避免被被組件樣式覆蓋
   document.documentElement.style.setProperty('background-color', color, 'important');
   document.body.style.setProperty('background-color', color, 'important');
+
+  // 如果開啟了白板模式，且當前工具是滑鼠指標，則強制關閉穿透
+  if (val && activeTool.value === 'Mouse Pointer') {
+    console.log('App: Whiteboard enabled, disabling click-through');
+    await invoke('set_click_through', { ignore: false });
+  }
 }, { immediate: true });
 
 const appStyle = computed(() => {
@@ -57,10 +63,22 @@ onMounted(async () => {
   document.documentElement.style.overflow = 'hidden';
   document.body.style.backgroundColor = 'transparent';
   document.body.style.overflow = 'hidden';
-  unlistenTool = await listen<string>('tool-changed', (event) => {
+  unlistenTool = await listen<string>('tool-changed', async (event) => {
     console.log('App: tool-changed received', event.payload);
-    if (activeTool.value !== event.payload) {
-      activeTool.value = event.payload;
+    const newTool = event.payload;
+    if (activeTool.value !== newTool) {
+      activeTool.value = newTool;
+    }
+
+    // 處理滑鼠點擊穿透 (只針對 main 視窗)
+    if (!isToolbarWindow.value) {
+      if (newTool === 'Mouse Pointer') {
+        console.log('Main: Requesting click-through via Rust');
+        await invoke('set_click_through', { ignore: true });
+      } else {
+        console.log('Main: Disabling click-through via Rust');
+        await invoke('set_click_through', { ignore: false });
+      }
     }
   });
 

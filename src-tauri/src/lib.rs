@@ -9,6 +9,17 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
+fn set_click_through(app: AppHandle, ignore: bool) {
+    if let Some(main) = app.get_webview_window("main") {
+        println!("Rust: Setting click-through to {} for main window", ignore);
+        let _ = main.set_ignore_cursor_events(ignore);
+        if !ignore {
+            let _ = main.set_focus();
+        }
+    }
+}
+
+#[tauri::command]
 fn hide_windows(app: AppHandle) {
     if let Some(main) = app.get_webview_window("main") {
         if let Some(toolbar) = app.get_webview_window("toolbar") {
@@ -50,7 +61,11 @@ pub fn run() {
                 })
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![greet, hide_windows])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            hide_windows,
+            set_click_through
+        ])
         .setup(|app| {
             // 1. 設置工具列位置到螢幕右側
             if let Some(main_window) = app.get_webview_window("main") {

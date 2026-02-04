@@ -1,5 +1,9 @@
 <template>
-  <canvas ref="canvasEl" class="drawing-board"></canvas>
+  <canvas 
+    ref="canvasEl" 
+    class="drawing-board"
+    :class="{ 'mouse-pointer-cursor': activeTool === 'Mouse Pointer' }"
+  ></canvas>
 </template>
 
 <script setup lang="ts">
@@ -352,6 +356,9 @@ function animateShapes() {
  * @param e 滑鼠事件
  */
 function handleMousedown(e: MouseEvent) {
+  if (props.activeTool === 'Mouse Pointer') {
+    return;
+  }
   console.log('DrawingBoard: mousedown', e.clientX, e.clientY);
   emit('drawing-mousedown');
   isDrawing = true;
@@ -460,5 +467,9 @@ onUnmounted(() => {
   background: transparent;
   cursor: crosshair;
   z-index: 0; /* Behind toolbar */
+}
+
+.mouse-pointer-cursor {
+  cursor: default !important;
 }
 </style>
