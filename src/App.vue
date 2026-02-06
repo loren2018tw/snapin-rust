@@ -5,23 +5,27 @@ import { listen, emit as tauriEmit } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import DrawingBoard from "./component/DrawingBoard.vue";
 import SnapinToolbar from "./component/SnapinToolbar.vue";
+import SettingsWindow from "./component/SettingsWindow.vue";
 
 const isToolbarWindow = ref(window.location.hash === "#toolbar");
+const isSettingsWindow = ref(window.location.hash === "#settings");
 const currentWindow = getCurrentWindow();
 const drawingBoard = ref<any>(null);
 
 const activeTool = ref("brush1");
 const isWhiteboardMode = ref(false);
 const settings = ref({
-  pen1Color: "#000000",
-  traceColor: "#ff0000",
-  rectColor: "#0000ff",
-  lineWidth: 3,
+  pen1_color: "#000000",
+  trace_color: "#ff0000",
+  rect_color: "#0000ff",
+  line_width: 3,
+  hotkey: "F9",
 });
 
 let unlistenTool: (() => void) | null = null;
 let unlistenClear: (() => void) | null = null;
 let unlistenWhiteboard: (() => void) | null = null;
+let unlistenSettings: (() => void) | null = null;
 
 /**
  * 監聽並強制同步視窗背景
@@ -55,8 +59,17 @@ const appStyle = computed(() => {
 
 onMounted(async () => {
   const hash = window.location.hash;
-  console.log(`App mounted. Window Label: ${currentWindow.label}, Hash: ${hash}`);
+  console.log(`App mounted. Window Label: ${currentWindow?.label}, Hash: ${hash}`);
   isToolbarWindow.value = (hash === '#toolbar');
+  isSettingsWindow.value = (hash === '#settings');
+
+  // 載入初始設定
+  try {
+    const savedSettings = await invoke<any>('get_settings');
+    settings.value = savedSettings;
+  } catch (err) {
+    console.error('Failed to load settings:', err);
+  }
 
   // 初始化視窗樣式
   document.documentElement.style.backgroundColor = 'transparent';
@@ -92,6 +105,11 @@ onMounted(async () => {
     if (isWhiteboardMode.value !== event.payload) {
       isWhiteboardMode.value = event.payload;
     }
+  });
+
+  unlistenSettings = await listen<any>('settings-updated', (event) => {
+    console.log('App: settings-updated received', event.payload);
+    settings.value = event.payload;
   });
 
   window.addEventListener('keydown', handleKeydown);
@@ -159,6 +177,7 @@ onUnmounted(() => {
   if (unlistenTool) unlistenTool();
   if (unlistenClear) unlistenClear();
   if (unlistenWhiteboard) unlistenWhiteboard();
+  if (unlistenSettings) unlistenSettings();
   window.removeEventListener('keydown', handleKeydown);
 });
 
@@ -166,15 +185,22 @@ function handleClose() {
   handleHide();
 }
 
+function handleCloseSettings() {
+  currentWindow?.hide();
+}
+
 async function handleStartDrag() {
-  await currentWindow.startDragging();
+  await currentWindow?.startDragging();
 }
 </script>
 
 <template>
   <v-app :style="appStyle">
     <v-main>
-      <div v-if="!isToolbarWindow" class="container">
+      <div v-if="isSettingsWindow">
+        <SettingsWindow @close="handleCloseSettings" />
+      </div>
+      <div v-else-if="!isToolbarWindow" class="container">
         <DrawingBoard ref="drawingBoard" :active-tool="activeTool" :settings="settings" />
       </div>
       <div v-else>

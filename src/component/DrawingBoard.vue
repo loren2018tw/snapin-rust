@@ -18,13 +18,13 @@ const props = defineProps<{
   /** 繪圖相關設定 */
   settings: {
     /** 畫筆 1 的顏色 */
-    pen1Color: string;
+    pen1_color: string;
     /** 追蹤筆的顏色 */
-    traceColor: string;
+    trace_color: string;
     /** 矩形和橢圓的顏色 */
-    rectColor: string;
+    rect_color: string;
     /** 線條寬度 */
-    lineWidth: number;
+    line_width: number;
   };
 }>();
 
@@ -177,8 +177,8 @@ function draw(e: MouseEvent) {
   if (!isDrawing || !ctx || !canvasEl.value) return;
 
   if (props.activeTool === 'brush1') {
-    ctx.strokeStyle = props.settings.pen1Color;
-    ctx.lineWidth = props.settings.lineWidth;
+    ctx.strokeStyle = props.settings.pen1_color;
+    ctx.lineWidth = props.settings.line_width;
     ctx.beginPath();
     ctx.moveTo(lastX, lastY);
     ctx.lineTo(e.clientX, e.clientY);
@@ -189,12 +189,12 @@ function draw(e: MouseEvent) {
       y1: lastY,
       x2: e.clientX,
       y2: e.clientY,
-      color: props.settings.pen1Color,
-      width: props.settings.lineWidth,
+      color: props.settings.pen1_color,
+      width: props.settings.line_width,
     });
   } else if (props.activeTool === 'Trail Pen') {
-    ctx.strokeStyle = props.settings.traceColor;
-    ctx.lineWidth = props.settings.lineWidth;
+    ctx.strokeStyle = props.settings.trace_color;
+    ctx.lineWidth = props.settings.line_width;
     ctx.beginPath();
     ctx.moveTo(lastX, lastY);
     ctx.lineTo(e.clientX, e.clientY);
@@ -206,8 +206,8 @@ function draw(e: MouseEvent) {
       x2: e.clientX,
       y2: e.clientY,
       timestamp: Date.now(),
-      color: props.settings.traceColor,
-      width: props.settings.lineWidth,
+      color: props.settings.trace_color,
+      width: props.settings.line_width,
     });
   } else if (props.activeTool === 'Rectangle') {
     redrawCanvas();
@@ -218,8 +218,8 @@ function draw(e: MouseEvent) {
         y1: startY,
         x2: e.clientX,
         y2: e.clientY,
-        color: props.settings.rectColor,
-        width: props.settings.lineWidth,
+        color: props.settings.rect_color,
+        width: props.settings.line_width,
       };
       drawRectangle(
         ctx,
@@ -245,8 +245,8 @@ function draw(e: MouseEvent) {
         y: centerY,
         radiusX: radiusX,
         radiusY: radiusY,
-        color: props.settings.rectColor,
-        width: props.settings.lineWidth,
+        color: props.settings.rect_color,
+        width: props.settings.line_width,
       };
       drawEllipse(
         ctx,

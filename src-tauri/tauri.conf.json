@@ -35,6 +35,15 @@
         "visible": false,
         "url": "/#toolbar",
         "skipTaskbar": true
+      },
+      {
+        "label": "settings",
+        "title": "設定",
+        "width": 450,
+        "height": 650,
+        "resizable": false,
+        "visible": false,
+        "url": "/#settings"
       }
     ],
     "security": {
