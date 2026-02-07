@@ -5,6 +5,7 @@ import { listen, emit as tauriEmit } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import DrawingBoard from "./component/DrawingBoard.vue";
 import SnapinToolbar from "./component/SnapinToolbar.vue";
+import SettingsDialog from "./component/SettingsDialog.vue";
 
 const isToolbarWindow = ref(window.location.hash === "#toolbar");
 const currentWindow = getCurrentWindow();
@@ -18,6 +19,7 @@ const settings = ref({
   rectColor: "#0000ff",
   lineWidth: 5,
 });
+const isSettingsDialogVisible = ref(false);
 
 let unlistenTool: (() => void) | null = null;
 let unlistenClear: (() => void) | null = null;
@@ -109,6 +111,12 @@ onMounted(async () => {
     },
   );
 
+  // 監聽來自 Tauri 後端的設定對話框開啟事件
+  await listen("open-settings", () => {
+    console.log("App: open-settings received");
+    isSettingsDialogVisible.value = true;
+  });
+
   window.addEventListener("keydown", handleKeydown);
 
   await nextTick();
@@ -173,6 +181,12 @@ async function handleHide() {
   await invoke("hide_windows");
 }
 
+// 處理設定對話框更新設定
+function handleUpdateSettings(newSettings: typeof settings.value) {
+  console.log("App: Updating settings", newSettings);
+  settings.value = { ...newSettings };
+}
+
 onUnmounted(() => {
   if (unlistenTool) unlistenTool();
   if (unlistenClear) unlistenClear();
@@ -197,6 +211,11 @@ async function handleStartDrag() {
           ref="drawingBoard"
           :active-tool="activeTool"
           :settings="settings"
+        />
+        <SettingsDialog
+          v-model="isSettingsDialogVisible"
+          :settings="settings"
+          @update:settings="handleUpdateSettings"
         />
       </div>
       <div v-else>

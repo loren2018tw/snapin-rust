@@ -1,5 +1,5 @@
 use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Shortcut, ShortcutState};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -100,9 +100,12 @@ pub fn run() {
             // 2. 建立 Tray Icon 菜單
             let toggle_item =
                 tauri::menu::MenuItem::with_id(app, "toggle", "顯示/隱藏視窗", true, None::<&str>)?;
+            let settings_item =
+                tauri::menu::MenuItem::with_id(app, "settings", "設定", true, None::<&str>)?;
             let quit_item =
                 tauri::menu::MenuItem::with_id(app, "quit", "退出程式", true, None::<&str>)?;
-            let menu = tauri::menu::Menu::with_items(app, &[&toggle_item, &quit_item])?;
+            let menu =
+                tauri::menu::Menu::with_items(app, &[&toggle_item, &settings_item, &quit_item])?;
 
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
@@ -130,6 +133,21 @@ pub fn run() {
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "toggle" => {
                         toggle_windows(app.app_handle());
+                    }
+                    "settings" => {
+                        // 先顯示 main 窗口，確保設定對話框可見
+                        if let Some(main) = app.app_handle().get_webview_window("main") {
+                            let _ = main.show();
+                            let _ = main.set_focus();
+                        }
+                        if let Some(toolbar) = app.app_handle().get_webview_window("toolbar") {
+                            let _ = toolbar.show();
+                        }
+
+                        // 發送事件到前端開啟設定對話框
+                        if let Err(e) = app.app_handle().emit("open-settings", ()) {
+                            println!("Failed to emit open-settings event: {:?}", e);
+                        }
                     }
                     "quit" => {
                         app.exit(0);
