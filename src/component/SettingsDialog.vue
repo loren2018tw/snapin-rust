@@ -67,6 +67,7 @@
       </v-card-text>
 
       <v-card-actions>
+        <v-btn text @click="handleResetToDefault"> 預設值 </v-btn>
         <v-spacer />
         <v-btn text @click="handleCancel"> 取消 </v-btn>
         <v-btn color="primary" @click="handleSave"> 保存 </v-btn>
@@ -121,6 +122,15 @@ watch(
 
 const handleCancel = () => {
   isVisible.value = false;
+};
+
+const handleResetToDefault = () => {
+  localSettings.value = {
+    pen1Color: "#ff0000", // 紅色
+    traceColor: "#ff8800", // 橘色
+    rectColor: "#0000ff", // 藍色
+    lineWidth: 7, // 7px
+  };
 };
 
 const handleSave = () => {

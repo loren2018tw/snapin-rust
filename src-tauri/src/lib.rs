@@ -1,3 +1,4 @@
+use serde_json::Value as JsonValue;
 use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Shortcut, ShortcutState};
@@ -46,10 +47,71 @@ fn toggle_windows(app: &AppHandle) {
     }
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Default)]
+struct AppSettings {
+    pen1_color: String,
+    trace_color: String,
+    rect_color: String,
+    line_width: u32,
+}
+
+#[tauri::command]
+fn save_settings(app: AppHandle, settings: AppSettings) -> Result<(), String> {
+    let store = tauri_plugin_store::StoreBuilder::new(&app, "settings.json")
+        .build()
+        .map_err(|e| format!("Failed to create store: {:?}", e))?;
+
+    store.set("pen1_color", settings.pen1_color);
+    store.set("trace_color", settings.trace_color);
+    store.set("rect_color", settings.rect_color);
+    store.set("line_width", settings.line_width);
+
+    store
+        .save()
+        .map_err(|e| format!("Failed to save settings: {:?}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+fn load_settings(app: AppHandle) -> Result<AppSettings, String> {
+    let store = tauri_plugin_store::StoreBuilder::new(&app, "settings.json")
+        .build()
+        .map_err(|e| format!("Failed to create store: {:?}", e))?;
+
+    let pen1_color = match store.get("pen1_color") {
+        Some(JsonValue::String(s)) => s.clone(),
+        _ => "#ff0000".to_string(),
+    };
+
+    let trace_color = match store.get("trace_color") {
+        Some(JsonValue::String(s)) => s.clone(),
+        _ => "#ff8800".to_string(),
+    };
+
+    let rect_color = match store.get("rect_color") {
+        Some(JsonValue::String(s)) => s.clone(),
+        _ => "#0000ff".to_string(),
+    };
+
+    let line_width = match store.get("line_width") {
+        Some(JsonValue::Number(n)) => n.as_u64().unwrap_or(5) as u32,
+        _ => 5,
+    };
+
+    Ok(AppSettings {
+        pen1_color,
+        trace_color,
+        rect_color,
+        line_width,
+    })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, shortcut, event| {
@@ -64,7 +126,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             hide_windows,
-            set_click_through
+            set_click_through,
+            save_settings,
+            load_settings
         ])
         .setup(|app| {
             // 1. 設置工具列位置到螢幕右側

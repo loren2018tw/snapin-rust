@@ -21,6 +21,47 @@ const settings = ref({
 });
 const isSettingsDialogVisible = ref(false);
 
+// 定義設定類型介面（與 Rust AppSettings 結構對應）
+interface AppSettings {
+  pen1_color: string;
+  trace_color: string;
+  rect_color: string;
+  line_width: number;
+}
+
+// 加載設定
+async function loadSettings() {
+  try {
+    const savedSettings = await invoke<AppSettings>("load_settings");
+    console.log("App: Loaded settings", savedSettings);
+    settings.value = {
+      pen1Color: savedSettings.pen1_color || "#ff0000",
+      traceColor: savedSettings.trace_color || "#ff8800",
+      rectColor: savedSettings.rect_color || "#0000ff",
+      lineWidth: savedSettings.line_width || 5,
+    };
+  } catch (error) {
+    console.error("App: Failed to load settings", error);
+  }
+}
+
+// 保存設定
+async function saveSettings(newSettings: typeof settings.value) {
+  try {
+    await invoke("save_settings", {
+      settings: {
+        pen1_color: newSettings.pen1Color,
+        trace_color: newSettings.traceColor,
+        rect_color: newSettings.rectColor,
+        line_width: newSettings.lineWidth,
+      },
+    });
+    console.log("App: Settings saved successfully");
+  } catch (error) {
+    console.error("App: Failed to save settings", error);
+  }
+}
+
 let unlistenTool: (() => void) | null = null;
 let unlistenClear: (() => void) | null = null;
 let unlistenWhiteboard: (() => void) | null = null;
@@ -71,6 +112,9 @@ onMounted(async () => {
     `App mounted. Window Label: ${currentWindow.label}, Hash: ${hash}`,
   );
   isToolbarWindow.value = hash === "#toolbar";
+
+  // 載入設定
+  await loadSettings();
 
   // 初始化視窗樣式
   document.documentElement.style.backgroundColor = "transparent";
@@ -182,9 +226,10 @@ async function handleHide() {
 }
 
 // 處理設定對話框更新設定
-function handleUpdateSettings(newSettings: typeof settings.value) {
+async function handleUpdateSettings(newSettings: typeof settings.value) {
   console.log("App: Updating settings", newSettings);
   settings.value = { ...newSettings };
+  await saveSettings(newSettings);
 }
 
 onUnmounted(() => {
