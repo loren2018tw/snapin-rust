@@ -1,18 +1,18 @@
 <template>
-  <canvas 
-    ref="canvasEl" 
+  <canvas
+    ref="canvasEl"
     class="drawing-board"
     :class="{ 'mouse-pointer-cursor': activeTool === 'Mouse Pointer' }"
   ></canvas>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from "vue";
 
 /**
- * 繪圖板組件的屬性
+ * 繪圖板組件的屬性類型定義
  */
-const props = defineProps<{
+interface Props {
   /** 當前選擇的工具類型 */
   activeTool: string;
   /** 繪圖相關設定 */
@@ -26,16 +26,29 @@ const props = defineProps<{
     /** 線條寬度 */
     lineWidth: number;
   };
-}>();
+}
+
+/**
+ * 繪圖板組件的屬性
+ */
+const props = withDefaults(defineProps<Props>(), {
+  activeTool: "brush1",
+  settings: () => ({
+    pen1Color: "#ff0000", // 紅色
+    traceColor: "#ff8800", // 橘色
+    rectColor: "#0000ff", // 藍色
+    lineWidth: 7, // 7px
+  }),
+});
 
 /**
  * 繪圖板組件觸發的事件
  */
 const emit = defineEmits<{
   /** 更新當前工具 */
-  (e: 'update:activeTool', tool: string): void;
+  (e: "update:activeTool", tool: string): void;
   /** 繪圖區域滑鼠按下事件 */
-  (e: 'drawing-mousedown'): void;
+  (e: "drawing-mousedown"): void;
 }>();
 
 /** 基礎形狀介面 */
@@ -50,7 +63,7 @@ interface BaseShape {
 
 /** 畫筆形狀介面 */
 interface BrushShape extends BaseShape {
-  type: 'brush1';
+  type: "brush1";
   /** 起始 X 座標 */
   x1: number;
   /** 起始 Y 座標 */
@@ -63,7 +76,7 @@ interface BrushShape extends BaseShape {
 
 /** 追蹤筆形狀介面 */
 interface TrailShape extends BaseShape {
-  type: 'Trail Pen';
+  type: "Trail Pen";
   /** 起始 X 座標 */
   x1: number;
   /** 起始 Y 座標 */
@@ -78,7 +91,7 @@ interface TrailShape extends BaseShape {
 
 /** 矩形形狀介面 */
 interface RectShape extends BaseShape {
-  type: 'Rectangle';
+  type: "Rectangle";
   /** 起始 X 座標 */
   x1: number;
   /** 起始 Y 座標 */
@@ -91,7 +104,7 @@ interface RectShape extends BaseShape {
 
 /** 橢圓形狀介面 */
 interface EllipseShape extends BaseShape {
-  type: 'Ellipse';
+  type: "Ellipse";
   /** 中心 X 座標 */
   x: number;
   /** 中心 Y 座標 */
@@ -176,7 +189,7 @@ function drawEllipse(
 function draw(e: MouseEvent) {
   if (!isDrawing || !ctx || !canvasEl.value) return;
 
-  if (props.activeTool === 'brush1') {
+  if (props.activeTool === "brush1") {
     ctx.strokeStyle = props.settings.pen1Color;
     ctx.lineWidth = props.settings.lineWidth;
     ctx.beginPath();
@@ -184,7 +197,7 @@ function draw(e: MouseEvent) {
     ctx.lineTo(e.clientX, e.clientY);
     ctx.stroke();
     shapes.push({
-      type: 'brush1',
+      type: "brush1",
       x1: lastX,
       y1: lastY,
       x2: e.clientX,
@@ -192,7 +205,7 @@ function draw(e: MouseEvent) {
       color: props.settings.pen1Color,
       width: props.settings.lineWidth,
     });
-  } else if (props.activeTool === 'Trail Pen') {
+  } else if (props.activeTool === "Trail Pen") {
     ctx.strokeStyle = props.settings.traceColor;
     ctx.lineWidth = props.settings.lineWidth;
     ctx.beginPath();
@@ -200,7 +213,7 @@ function draw(e: MouseEvent) {
     ctx.lineTo(e.clientX, e.clientY);
     ctx.stroke();
     shapes.push({
-      type: 'Trail Pen',
+      type: "Trail Pen",
       x1: lastX,
       y1: lastY,
       x2: e.clientX,
@@ -209,11 +222,11 @@ function draw(e: MouseEvent) {
       color: props.settings.traceColor,
       width: props.settings.lineWidth,
     });
-  } else if (props.activeTool === 'Rectangle') {
+  } else if (props.activeTool === "Rectangle") {
     redrawCanvas();
     if (props.settings) {
       tempRectangleShape = {
-        type: 'Rectangle',
+        type: "Rectangle",
         x1: startX,
         y1: startY,
         x2: e.clientX,
@@ -231,7 +244,7 @@ function draw(e: MouseEvent) {
         tempRectangleShape.width,
       );
     }
-  } else if (props.activeTool === 'Ellipse') {
+  } else if (props.activeTool === "Ellipse") {
     redrawCanvas();
     if (props.settings) {
       const radiusX = Math.abs(e.clientX - startX) / 2;
@@ -240,7 +253,7 @@ function draw(e: MouseEvent) {
       const centerY = startY + (e.clientY >= startY ? radiusY : -radiusY);
 
       tempEllipseShape = {
-        type: 'Ellipse',
+        type: "Ellipse",
         x: centerX,
         y: centerY,
         radiusX: radiusX,
@@ -272,14 +285,14 @@ function redrawCanvas() {
   ctx.clearRect(0, 0, canvasEl.value.width, canvasEl.value.height);
 
   for (const shape of shapes) {
-    if (shape.type === 'brush1') {
+    if (shape.type === "brush1") {
       ctx.strokeStyle = shape.color;
       ctx.lineWidth = shape.width;
       ctx.beginPath();
       ctx.moveTo(shape.x1, shape.y1);
       ctx.lineTo(shape.x2, shape.y2);
       ctx.stroke();
-    } else if (shape.type === 'Trail Pen') {
+    } else if (shape.type === "Trail Pen") {
       const trail = shape;
       const age = Date.now() - trail.timestamp;
       const opacity = 1 - age / 5000;
@@ -287,7 +300,7 @@ function redrawCanvas() {
         let r = 0,
           g = 0,
           b = 0;
-        if (shape.color && shape.color.startsWith('#')) {
+        if (shape.color && shape.color.startsWith("#")) {
           r = parseInt(shape.color.slice(1, 3), 16);
           g = parseInt(shape.color.slice(3, 5), 16);
           b = parseInt(shape.color.slice(5, 7), 16);
@@ -301,10 +314,26 @@ function redrawCanvas() {
         ctx.lineTo(trail.x2, trail.y2);
         ctx.stroke();
       }
-    } else if (shape.type === 'Rectangle') {
-      drawRectangle(ctx, shape.x1, shape.y1, shape.x2, shape.y2, shape.color, shape.width);
-    } else if (shape.type === 'Ellipse') {
-      drawEllipse(ctx, shape.x, shape.y, shape.radiusX, shape.radiusY, shape.color, shape.width);
+    } else if (shape.type === "Rectangle") {
+      drawRectangle(
+        ctx,
+        shape.x1,
+        shape.y1,
+        shape.x2,
+        shape.y2,
+        shape.color,
+        shape.width,
+      );
+    } else if (shape.type === "Ellipse") {
+      drawEllipse(
+        ctx,
+        shape.x,
+        shape.y,
+        shape.radiusX,
+        shape.radiusY,
+        shape.color,
+        shape.width,
+      );
     }
   }
   // Draw temporary shapes (preview)
@@ -340,7 +369,7 @@ function animateShapes() {
   for (let i = 0; i < shapes.length; i++) {
     const shape = shapes[i];
     if (!shape) continue;
-    if (shape.type === 'Trail Pen') {
+    if (shape.type === "Trail Pen") {
       const age = Date.now() - shape.timestamp;
       if (age / 5000 > 1) {
         shapes.splice(i, 1);
@@ -356,11 +385,11 @@ function animateShapes() {
  * @param e 滑鼠事件
  */
 function handleMousedown(e: MouseEvent) {
-  if (props.activeTool === 'Mouse Pointer') {
+  if (props.activeTool === "Mouse Pointer") {
     return;
   }
-  console.log('DrawingBoard: mousedown', e.clientX, e.clientY);
-  emit('drawing-mousedown');
+  console.log("DrawingBoard: mousedown", e.clientX, e.clientY);
+  emit("drawing-mousedown");
   isDrawing = true;
   lastX = e.clientX;
   lastY = e.clientY;
@@ -375,10 +404,10 @@ function handleMouseup() {
   if (!isDrawing) return;
   isDrawing = false;
 
-  if (props.activeTool === 'Rectangle' && tempRectangleShape) {
+  if (props.activeTool === "Rectangle" && tempRectangleShape) {
     shapes.push({ ...tempRectangleShape });
     tempRectangleShape = null;
-  } else if (props.activeTool === 'Ellipse' && tempEllipseShape) {
+  } else if (props.activeTool === "Ellipse" && tempEllipseShape) {
     shapes.push({ ...tempEllipseShape });
     tempEllipseShape = null;
   }
@@ -397,7 +426,7 @@ function handleResize() {
   if (canvasEl.value && ctx) {
     canvasEl.value.width = window.innerWidth;
     canvasEl.value.height = window.innerHeight;
-    ctx.lineCap = 'round'; // Reset context settings after resize
+    ctx.lineCap = "round"; // Reset context settings after resize
     redrawCanvas();
   }
 }
@@ -417,39 +446,39 @@ defineExpose({
 });
 
 onMounted(() => {
-  console.log('DrawingBoard mounted');
+  console.log("DrawingBoard mounted");
   if (canvasEl.value) {
     try {
-      ctx = canvasEl.value.getContext('2d');
+      ctx = canvasEl.value.getContext("2d");
       if (!ctx) {
-        console.error('Failed to get 2d context');
+        console.error("Failed to get 2d context");
         return;
       }
       handleResize();
-      window.addEventListener('resize', handleResize);
+      window.addEventListener("resize", handleResize);
 
-      canvasEl.value.addEventListener('mousedown', handleMousedown);
-      window.addEventListener('mousemove', draw);
-      window.addEventListener('mouseup', handleMouseup);
-      canvasEl.value.addEventListener('mouseout', handleMouseout);
+      canvasEl.value.addEventListener("mousedown", handleMousedown);
+      window.addEventListener("mousemove", draw);
+      window.addEventListener("mouseup", handleMouseup);
+      canvasEl.value.addEventListener("mouseout", handleMouseout);
 
       animateShapes();
-      console.log('DrawingBoard initialized');
+      console.log("DrawingBoard initialized");
     } catch (err) {
-      console.error('Error initializing DrawingBoard:', err);
+      console.error("Error initializing DrawingBoard:", err);
     }
   }
 });
 
 onUnmounted(() => {
-  console.log('DrawingBoard unmounting');
-  window.removeEventListener('resize', handleResize);
+  console.log("DrawingBoard unmounting");
+  window.removeEventListener("resize", handleResize);
   if (canvasEl.value) {
-    canvasEl.value.removeEventListener('mousedown', handleMousedown);
-    canvasEl.value.removeEventListener('mouseout', handleMouseout);
+    canvasEl.value.removeEventListener("mousedown", handleMousedown);
+    canvasEl.value.removeEventListener("mouseout", handleMouseout);
   }
-  window.removeEventListener('mousemove', draw);
-  window.removeEventListener('mouseup', handleMouseup);
+  window.removeEventListener("mousemove", draw);
+  window.removeEventListener("mouseup", handleMouseup);
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId);
   }

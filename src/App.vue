@@ -13,10 +13,10 @@ const drawingBoard = ref<any>(null);
 const activeTool = ref("brush1");
 const isWhiteboardMode = ref(false);
 const settings = ref({
-  pen1Color: "#000000",
-  traceColor: "#ff0000",
+  pen1Color: "#ff0000",
+  traceColor: "#ff8800",
   rectColor: "#0000ff",
-  lineWidth: 3,
+  lineWidth: 5,
 });
 
 let unlistenTool: (() => void) | null = null;
@@ -26,45 +26,57 @@ let unlistenWhiteboard: (() => void) | null = null;
 /**
  * 監聽並強制同步視窗背景
  */
-watch(isWhiteboardMode, async (val) => {
-  if (isToolbarWindow.value) return;
-  
-  const color = val ? '#ffffff' : 'transparent';
-  console.log(`Setting background to: ${color}`);
-  
-  // 使用 setProperty 強制注入樣式，避免被被組件樣式覆蓋
-  document.documentElement.style.setProperty('background-color', color, 'important');
-  document.body.style.setProperty('background-color', color, 'important');
+watch(
+  isWhiteboardMode,
+  async (val) => {
+    if (isToolbarWindow.value) return;
 
-  // 如果開啟了白板模式，且當前工具是滑鼠指標，則強制關閉穿透
-  if (val && activeTool.value === 'Mouse Pointer') {
-    console.log('App: Whiteboard enabled, disabling click-through');
-    await invoke('set_click_through', { ignore: false });
-  }
-}, { immediate: true });
+    const color = val ? "#ffffff" : "transparent";
+    console.log(`Setting background to: ${color}`);
+
+    // 使用 setProperty 強制注入樣式，避免被被組件樣式覆蓋
+    document.documentElement.style.setProperty(
+      "background-color",
+      color,
+      "important",
+    );
+    document.body.style.setProperty("background-color", color, "important");
+
+    // 如果開啟了白板模式，且當前工具是滑鼠指標，則強制關閉穿透
+    if (val && activeTool.value === "Mouse Pointer") {
+      console.log("App: Whiteboard enabled, disabling click-through");
+      await invoke("set_click_through", { ignore: false });
+    }
+  },
+  { immediate: true },
+);
 
 const appStyle = computed(() => {
   if (isToolbarWindow.value) {
-    return { backgroundColor: 'transparent !important' };
+    return { backgroundColor: "transparent !important" };
   }
-  return { 
-    'background-color': isWhiteboardMode.value ? '#ffffff !important' : 'transparent !important',
-    'transition': 'background-color 0.3s ease'
+  return {
+    "background-color": isWhiteboardMode.value
+      ? "#ffffff !important"
+      : "transparent !important",
+    transition: "background-color 0.3s ease",
   };
 });
 
 onMounted(async () => {
   const hash = window.location.hash;
-  console.log(`App mounted. Window Label: ${currentWindow.label}, Hash: ${hash}`);
-  isToolbarWindow.value = (hash === '#toolbar');
+  console.log(
+    `App mounted. Window Label: ${currentWindow.label}, Hash: ${hash}`,
+  );
+  isToolbarWindow.value = hash === "#toolbar";
 
   // 初始化視窗樣式
-  document.documentElement.style.backgroundColor = 'transparent';
-  document.documentElement.style.overflow = 'hidden';
-  document.body.style.backgroundColor = 'transparent';
-  document.body.style.overflow = 'hidden';
-  unlistenTool = await listen<string>('tool-changed', async (event) => {
-    console.log('App: tool-changed received', event.payload);
+  document.documentElement.style.backgroundColor = "transparent";
+  document.documentElement.style.overflow = "hidden";
+  document.body.style.backgroundColor = "transparent";
+  document.body.style.overflow = "hidden";
+  unlistenTool = await listen<string>("tool-changed", async (event) => {
+    console.log("App: tool-changed received", event.payload);
     const newTool = event.payload;
     if (activeTool.value !== newTool) {
       activeTool.value = newTool;
@@ -72,94 +84,100 @@ onMounted(async () => {
 
     // 處理滑鼠點擊穿透 (只針對 main 視窗)
     if (!isToolbarWindow.value) {
-      if (newTool === 'Mouse Pointer') {
-        console.log('Main: Requesting click-through via Rust');
-        await invoke('set_click_through', { ignore: true });
+      if (newTool === "Mouse Pointer") {
+        console.log("Main: Requesting click-through via Rust");
+        await invoke("set_click_through", { ignore: true });
       } else {
-        console.log('Main: Disabling click-through via Rust');
-        await invoke('set_click_through', { ignore: false });
+        console.log("Main: Disabling click-through via Rust");
+        await invoke("set_click_through", { ignore: false });
       }
     }
   });
 
-  unlistenClear = await listen('clear-canvas', () => {
-    console.log('App: clear-canvas received');
+  unlistenClear = await listen("clear-canvas", () => {
+    console.log("App: clear-canvas received");
     drawingBoard.value?.clearCanvas();
   });
 
-  unlistenWhiteboard = await listen<boolean>('whiteboard-mode-changed', (event) => {
-    console.log('App: whiteboard-mode-changed received', event.payload);
-    if (isWhiteboardMode.value !== event.payload) {
-      isWhiteboardMode.value = event.payload;
-    }
-  });
+  unlistenWhiteboard = await listen<boolean>(
+    "whiteboard-mode-changed",
+    (event) => {
+      console.log("App: whiteboard-mode-changed received", event.payload);
+      if (isWhiteboardMode.value !== event.payload) {
+        isWhiteboardMode.value = event.payload;
+      }
+    },
+  );
 
-  window.addEventListener('keydown', handleKeydown);
+  window.addEventListener("keydown", handleKeydown);
 
   await nextTick();
 });
 
 async function handleKeydown(e: KeyboardEvent) {
   const key = e.key.toLowerCase();
-  
+
   // 如果正在輸入（雖然目前沒輸入框），則不觸發
-  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+  if (
+    e.target instanceof HTMLInputElement ||
+    e.target instanceof HTMLTextAreaElement
+  ) {
     return;
   }
 
   switch (key) {
-    case 'b':
-      updateTool('brush1');
+    case "b":
+      updateTool("brush1");
       break;
-    case 't':
-      updateTool('Trail Pen');
+    case "t":
+      updateTool("Trail Pen");
       break;
-    case 'r':
-      updateTool('Rectangle');
+    case "r":
+      updateTool("Rectangle");
       break;
-    case 'e':
-      updateTool('Ellipse');
+    case "e":
+      updateTool("Ellipse");
       break;
-    case 'c':
+    case "c":
       handleClear();
       break;
-    case 'w':
+    case "w":
       toggleWhiteboard();
       break;
   }
 }
 
 async function updateTool(tool: string) {
-  if (isWhiteboardMode.value && tool === 'Mouse Pointer') return;
-  
+  if (isWhiteboardMode.value && tool === "Mouse Pointer") return;
+
   activeTool.value = tool;
-  await tauriEmit('tool-changed', tool);
+  await tauriEmit("tool-changed", tool);
 }
 
 async function toggleWhiteboard() {
   const newVal = !isWhiteboardMode.value;
   isWhiteboardMode.value = newVal;
-  await tauriEmit('whiteboard-mode-changed', newVal);
+  await tauriEmit("whiteboard-mode-changed", newVal);
 
-  if (newVal && activeTool.value === 'Mouse Pointer') {
-    updateTool('brush1');
+  if (newVal && activeTool.value === "Mouse Pointer") {
+    updateTool("brush1");
   }
 }
 
 async function handleClear() {
   drawingBoard.value?.clearCanvas();
-  await tauriEmit('clear-canvas');
+  await tauriEmit("clear-canvas");
 }
 
 async function handleHide() {
-  await invoke('hide_windows');
+  await invoke("hide_windows");
 }
 
 onUnmounted(() => {
   if (unlistenTool) unlistenTool();
   if (unlistenClear) unlistenClear();
   if (unlistenWhiteboard) unlistenWhiteboard();
-  window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener("keydown", handleKeydown);
 });
 
 function handleClose() {
@@ -175,11 +193,15 @@ async function handleStartDrag() {
   <v-app :style="appStyle">
     <v-main>
       <div v-if="!isToolbarWindow" class="container">
-        <DrawingBoard ref="drawingBoard" :active-tool="activeTool" :settings="settings" />
+        <DrawingBoard
+          ref="drawingBoard"
+          :active-tool="activeTool"
+          :settings="settings"
+        />
       </div>
       <div v-else>
-        <SnapinToolbar 
-          v-model="activeTool" 
+        <SnapinToolbar
+          v-model="activeTool"
           v-model:isWhiteboardMode="isWhiteboardMode"
           @clear="handleClear"
           @close="handleClose"
@@ -198,7 +220,6 @@ async function handleStartDrag() {
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #249b73);
 }
-
 </style>
 <style>
 :root {
@@ -324,5 +345,4 @@ button {
     background-color: #0f0f0f69;
   }
 }
-
 </style>
