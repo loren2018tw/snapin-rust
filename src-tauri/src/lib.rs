@@ -1,5 +1,5 @@
 use serde_json::Value as JsonValue;
-use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Shortcut, ShortcutState};
 
@@ -141,8 +141,12 @@ pub fn run() {
                         let size = monitor.size();
                         let scale_factor = monitor.scale_factor();
 
-                        // 計算右側位置 (視窗寬度約 55)
-                        let window_width = (55.0 * scale_factor) as u32;
+                        // 獲取實際視窗寬度 (Windows 可能有最小寬度限制)
+                        let window_width = toolbar_window
+                            .outer_size()
+                            .ok()
+                            .map(|s| s.width)
+                            .unwrap_or((55.0 * scale_factor) as u32);
                         let x = size.width - window_width - (10.0 * scale_factor) as u32; // 距離右邊 10px
                         let y = (size.height / 2) - (275.0 * scale_factor) as u32; // 垂直到中間
 
@@ -179,16 +183,20 @@ pub fn run() {
                 .on_tray_icon_event(|app, event| {
                     println!("Tray Event: {:?}", event);
                     match event {
-                        // 處理單擊或雙擊 (不同 Linux 桌面行為不一)
+                        // 只處理左鍵單擊
                         TrayIconEvent::Click {
                             button: MouseButton::Left,
-                            ..
-                        }
-                        | TrayIconEvent::DoubleClick {
-                            button: MouseButton::Left,
+                            button_state,
                             ..
                         } => {
-                            println!("Tray: Activaton detected via Click/DoubleClick");
+                            // 在 Windows 上，Click 事件會觸發多次 (Down 和 Up)
+                            // 我們只在 Up (放開) 時執行切換，以避免閃爍 (連續切換兩次)
+                            #[cfg(target_os = "windows")]
+                            if button_state == MouseButtonState::Down {
+                                return;
+                            }
+
+                            println!("Tray: Activation detected via Click");
                             toggle_windows(app.app_handle());
                         }
                         _ => {}

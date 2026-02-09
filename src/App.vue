@@ -295,6 +295,8 @@ async function handleStartDrag() {
   color: #0f0f0f;
   background-color: transparent !important; /* 預設全透明 */
   overflow: hidden !important;
+  margin: 0;
+  padding: 0;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -302,11 +304,23 @@ async function handleStartDrag() {
   -webkit-text-size-adjust: 100%;
 }
 
-/* 強制讓 Vuetify 的基礎容器透明 */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: transparent;
+}
+
+/* 強制讓 Vuetify 的基礎容器透明且無邊距 */
 .v-application,
 .v-application__wrap,
 .v-main {
   background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: unset !important;
 }
 
 /* 除非在白板模式下，否則這些屬性會被 v-app 的 :style 覆蓋 */

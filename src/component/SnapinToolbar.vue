@@ -215,7 +215,8 @@ async function toggleWhiteboard() {
 .toolbar {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
+  padding-right: 2px; /* 留一點點邊距，避免貼死 */
   width: 100%;
   height: 100vh;
   background-color: transparent; /* 整體視窗背景透明 */
@@ -223,6 +224,8 @@ async function toggleWhiteboard() {
   gap: 5px;
   position: relative;
   overflow: hidden;
+  border: none !important;
+  outline: none !important;
 }
 
 

@@ -21,7 +21,8 @@
         "transparent": true,
         "resizable": true,
         "visible": false,
-        "skipTaskbar": true
+        "skipTaskbar": true,
+        "shadow": false
       },
       {
         "label": "toolbar",
@@ -34,7 +35,8 @@
         "resizable": false,
         "visible": false,
         "url": "/#toolbar",
-        "skipTaskbar": true
+        "skipTaskbar": true,
+        "shadow": false
       }
     ],
     "security": {
@@ -43,7 +45,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["appimage", "nsis"],
+    "targets": [
+      "appimage",
+      "nsis"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
