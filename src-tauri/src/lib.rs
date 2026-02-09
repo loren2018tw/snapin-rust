@@ -1,12 +1,16 @@
 use serde_json::Value as JsonValue;
+#[cfg(target_os = "windows")]
 use std::sync::atomic::{AtomicBool, Ordering};
+#[cfg(target_os = "windows")]
 use std::thread;
+#[cfg(target_os = "windows")]
 use std::time::Duration;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Shortcut, ShortcutState};
 
 // 追蹤視窗是否已經首次顯示過
+#[cfg(target_os = "windows")]
 static WINDOWS_SHOWN_ONCE: AtomicBool = AtomicBool::new(false);
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -271,7 +275,7 @@ pub fn run() {
                         } => {
                             // 在 Windows 上，Click 事件會觸發多次 (Down 和 Up)
                             // 我們只在 Up (放開) 時執行切換，以避免閃爍 (連續切換兩次)
-                            #[cfg(target_os = "windows")]
+                            // #[cfg(target_os = "windows")]
                             if button_state == MouseButtonState::Down {
                                 return;
                             }
