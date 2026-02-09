@@ -1,7 +1,13 @@
 use serde_json::Value as JsonValue;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::thread;
+use std::time::Duration;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Shortcut, ShortcutState};
+
+// 追蹤視窗是否已經首次顯示過
+static WINDOWS_SHOWN_ONCE: AtomicBool = AtomicBool::new(false);
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -38,10 +44,84 @@ fn toggle_windows(app: &AppHandle) {
                 let _ = main.hide();
                 let _ = toolbar.hide();
             } else {
-                let _ = main.show();
-                let _ = main.set_focus();
-                let _ = toolbar.show();
-                let _ = toolbar.set_focus();
+                // Windows 上使用延遲顯示來消除閃動
+                #[cfg(target_os = "windows")]
+                {
+                    // 記錄工具列當前位置（如果已經顯示過）
+                    let toolbar_pos = toolbar.outer_position().ok();
+
+                    // 將視窗移到螢幕外
+                    let _ = main.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                        x: -10000,
+                        y: -10000,
+                    }));
+                    let _ =
+                        toolbar.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                            x: -10000,
+                            y: -10000,
+                        }));
+
+                    // 顯示視窗（在螢幕外，用戶看不到）
+                    let _ = main.show();
+                    let _ = toolbar.show();
+
+                    // 等待 WebView 渲染完成，然後移回正確位置
+                    let main_clone = main.clone();
+                    let toolbar_clone = toolbar.clone();
+                    let is_first_show = !WINDOWS_SHOWN_ONCE.swap(true, Ordering::SeqCst);
+
+                    thread::spawn(move || {
+                        // 等待 WebView 初始化透明背景
+                        // 首次顯示需要更長時間，後續顯示較快
+                        let delay = if is_first_show { 150 } else { 50 };
+                        thread::sleep(Duration::from_millis(delay));
+
+                        // 獲取螢幕尺寸並移回正確位置
+                        if let Ok(Some(monitor)) = main_clone.current_monitor() {
+                            let size = monitor.size();
+                            let scale_factor = monitor.scale_factor();
+
+                            // 主視窗最大化
+                            let _ = main_clone.set_position(tauri::Position::Physical(
+                                tauri::PhysicalPosition { x: 0, y: 0 },
+                            ));
+                            let _ = main_clone.maximize();
+
+                            // 工具列視窗：如果之前有位置就恢復，否則移到螢幕右側
+                            if let Some(pos) = toolbar_pos {
+                                let _ = toolbar_clone.set_position(tauri::Position::Physical(pos));
+                            } else {
+                                let window_width = toolbar_clone
+                                    .outer_size()
+                                    .ok()
+                                    .map(|s| s.width)
+                                    .unwrap_or((55.0 * scale_factor) as u32);
+                                let x = size.width - window_width - (10.0 * scale_factor) as u32;
+                                let y = (size.height / 2) - (275.0 * scale_factor) as u32;
+
+                                let _ = toolbar_clone.set_position(tauri::Position::Physical(
+                                    tauri::PhysicalPosition {
+                                        x: x as i32,
+                                        y: y as i32,
+                                    },
+                                ));
+                            }
+                        }
+
+                        let _ = main_clone.set_focus();
+                        let _ = toolbar_clone.set_focus();
+                    });
+                    return;
+                }
+
+                // 非 Windows 平台：直接顯示
+                #[cfg(not(target_os = "windows"))]
+                {
+                    let _ = main.show();
+                    let _ = main.set_focus();
+                    let _ = toolbar.show();
+                    let _ = toolbar.set_focus();
+                }
             }
         }
     }
