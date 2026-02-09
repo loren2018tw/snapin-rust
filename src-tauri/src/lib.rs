@@ -154,10 +154,10 @@ pub fn run() {
                         ));
                     }
 
-                    #[cfg(any(target_os = "windows", target_os = "macos"))]
-                    if let Ok(handle) = main_window.as_ref().window_handle() {
-                        let _ = toolbar_window.set_parent_window(handle);
-                    }
+                    // #[cfg(any(target_os = "windows", target_os = "macos"))]
+                    // if let Ok(handle) = main_window.as_ref().window_handle() {
+                    //     let _ = toolbar_window.set_parent_window(handle);
+                    // }
                 }
             }
 
