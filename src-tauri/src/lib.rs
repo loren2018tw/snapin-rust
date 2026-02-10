@@ -24,6 +24,8 @@ fn set_click_through(app: AppHandle, ignore: bool) {
     if let Some(main) = app.get_webview_window("main") {
         println!("Rust: Setting click-through to {} for main window", ignore);
         let _ = main.set_ignore_cursor_events(ignore);
+        // 滑鼠穿透時，繪圖視窗置頂以保持標註可見
+        let _ = main.set_always_on_top(ignore);
         if !ignore {
             let _ = main.set_focus();
         }
