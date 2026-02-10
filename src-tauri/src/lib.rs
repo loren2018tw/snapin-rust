@@ -295,6 +295,9 @@ pub fn run() {
                     "settings" => {
                         // 先顯示 main 窗口，確保設定對話框可見
                         if let Some(main) = app.app_handle().get_webview_window("main") {
+                            // 暫時關閉滑鼠穿透與置頂，讓設定對話框可操作
+                            let _ = main.set_ignore_cursor_events(false);
+                            let _ = main.set_always_on_top(false);
                             let _ = main.show();
                             let _ = main.set_focus();
                         }

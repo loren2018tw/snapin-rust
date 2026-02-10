@@ -156,9 +156,18 @@ onMounted(async () => {
   );
 
   // 監聽來自 Tauri 後端的設定對話框開啟事件
-  await listen("open-settings", () => {
+  await listen("open-settings", async () => {
     console.log("App: open-settings received");
+    // 開啟設定時，如果在滑鼠穿透模式，Rust 後端已暫時關閉穿透
     isSettingsDialogVisible.value = true;
+  });
+
+  // 設定對話框關閉後，如果仍在滑鼠指標模式，恢復穿透與置頂
+  watch(isSettingsDialogVisible, async (visible) => {
+    if (!visible && !isToolbarWindow.value && activeTool.value === "Mouse Pointer") {
+      console.log("App: Settings closed, restoring click-through mode");
+      await invoke("set_click_through", { ignore: true });
+    }
   });
 
   window.addEventListener("keydown", handleKeydown);
