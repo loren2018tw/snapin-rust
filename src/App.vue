@@ -170,6 +170,20 @@ onMounted(async () => {
     }
   });
 
+  // 視窗重新顯示後，同步當前工具的 click-through 狀態
+  // 例如：隱藏時工具是 Mouse Pointer，再次顯示後需恢復穿透
+  if (!isToolbarWindow.value) {
+    await listen("request-tool-sync", async () => {
+      console.log("App: request-tool-sync received, activeTool =", activeTool.value);
+      if (activeTool.value === "Mouse Pointer") {
+        console.log("App: Restoring click-through for Mouse Pointer");
+        await invoke("set_click_through", { ignore: true });
+      } else {
+        await invoke("set_click_through", { ignore: false });
+      }
+    });
+  }
+
   window.addEventListener("keydown", handleKeydown);
 
   await nextTick();
@@ -198,6 +212,9 @@ async function handleKeydown(e: KeyboardEvent) {
       break;
     case "e":
       updateTool("Ellipse");
+      break;
+    case "m":
+      updateTool("Mouse Pointer");
       break;
     case "c":
       handleClear();

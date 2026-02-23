@@ -116,6 +116,9 @@ fn toggle_windows(app: &AppHandle) {
 
                         let _ = main_clone.set_focus();
                         let _ = toolbar_clone.set_focus();
+
+                        // 通知前端重新同步工具狀態（例如 Mouse Pointer 的 click-through）
+                        let _ = main_clone.emit("request-tool-sync", ());
                     });
                     return;
                 }
@@ -127,6 +130,9 @@ fn toggle_windows(app: &AppHandle) {
                     let _ = main.set_focus();
                     let _ = toolbar.show();
                     let _ = toolbar.set_focus();
+
+                    // 通知前端重新同步工具狀態（例如 Mouse Pointer 的 click-through）
+                    let _ = main.emit("request-tool-sync", ());
                 }
             }
         }
