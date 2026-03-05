@@ -64,6 +64,7 @@ jobs:
 
       - name: get date
         id: date
+        shell: bash
         run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
 
       - name: set version to date
