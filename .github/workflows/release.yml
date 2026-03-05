@@ -66,6 +66,10 @@ jobs:
         id: date
         run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
 
+      - name: set version to date
+        run: |
+          sed -i 's/"version": ".*"/"version": "${{ steps.date.outputs.DATE }}"/' src-tauri/tauri.conf.json
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
