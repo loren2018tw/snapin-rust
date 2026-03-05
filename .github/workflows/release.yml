@@ -68,7 +68,9 @@ jobs:
 
       - name: set version to date
         run: |
-          sed -i 's/"version": ".*"/"version": "${{ steps.date.outputs.DATE }}"/' src-tauri/tauri.conf.json
+          DATE=${{ steps.date.outputs.DATE }}
+          sed -i "s/\"version\": \".*\"/\"version\": \"${DATE}.0.0\"/" src-tauri/tauri.conf.json
+          echo "ASSET_PATTERN=snapin-rust_${DATE}_[arch][ext]" >> $GITHUB_ENV
 
       - uses: tauri-apps/tauri-action@v0
         env:
@@ -79,4 +81,5 @@ jobs:
           releaseBody: "See the assets to download this version and install."
           releaseDraft: true
           prerelease: false
+          assetNamePattern: ${{ env.ASSET_PATTERN }}
           args: ${{ matrix.args }}
