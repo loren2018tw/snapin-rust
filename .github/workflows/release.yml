@@ -67,6 +67,7 @@ jobs:
         run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
 
       - name: set version to date
+        shell: bash
         run: |
           DATE=${{ steps.date.outputs.DATE }}
           sed -i "s/\"version\": \".*\"/\"version\": \"${DATE}.0.0\"/" src-tauri/tauri.conf.json
